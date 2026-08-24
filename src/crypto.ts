@@ -98,18 +98,26 @@ export class UnaCryptoSession implements UnaCryptoAdapter {
   async unwrapAgentReadableKey(
     wrappedKey: WrappedAgentReadableKey,
   ): Promise<void> {
-    if (
-      wrappedKey.publicKeyAlgorithm &&
-      wrappedKey.publicKeyAlgorithm !== AGENT_KEY_ALGORITHM
-    ) {
+    if (wrappedKey.keyKind !== "agentReadableContent") {
+      throw new UnaCryptoError(
+        "invalid_wrapped_key",
+        "Wrapped key is not agent-readable content.",
+      );
+    }
+    if (!Number.isSafeInteger(wrappedKey.keyVersion) || wrappedKey.keyVersion < 1) {
+      throw new UnaCryptoError(
+        "invalid_wrapped_key",
+        "Wrapped key version must be a positive safe integer.",
+      );
+    }
+    if (wrappedKey.publicKeyAlgorithm !== AGENT_KEY_ALGORITHM) {
       throw new UnaCryptoError(
         "unsupported_algorithm",
-        `Una wrapped key uses unsupported algorithm ${wrappedKey.publicKeyAlgorithm}.`,
+        `Una wrapped key uses unsupported algorithm ${wrappedKey.publicKeyAlgorithm ?? "missing"}.`,
       );
     }
     if (
       this.publicKeyId &&
-      wrappedKey.publicKeyId &&
       wrappedKey.publicKeyId !== this.publicKeyId
     ) {
       throw new UnaCryptoError(
@@ -179,6 +187,12 @@ export class UnaCryptoSession implements UnaCryptoAdapter {
         wrappingKey,
         ciphertext,
       );
+      if (rawContentKey.byteLength !== 32) {
+        throw new UnaCryptoError(
+          "invalid_wrapped_key",
+          "Wrapped agent-readable content key must contain exactly 32 bytes.",
+        );
+      }
       const contentKey = await this.webCrypto.subtle.importKey(
         "raw",
         rawContentKey,

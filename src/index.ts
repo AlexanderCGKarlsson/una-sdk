@@ -1,4 +1,5 @@
 export { UnaMcpClient } from "./client.js";
+export type { CalendarListEventsArgs } from "./client.js";
 export {
   AGENT_KEY_ALGORITHM,
   UnaCryptoError,

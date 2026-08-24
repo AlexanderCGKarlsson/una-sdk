@@ -10,7 +10,7 @@ dependencies:
       value: "una"
       description: "Una's hosted encrypted MCP endpoint"
       transport: "streamable_http"
-      url: "https://unafamily.app/mcp"
+      url: "https://mcp.unafamily.app/"
 
 policy:
   allow_implicit_invocation: true

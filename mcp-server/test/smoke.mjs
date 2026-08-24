@@ -7,7 +7,7 @@ const child = spawn(process.execPath, ["dist/stdio.js"], {
   cwd: new URL("..", import.meta.url),
   env: {
     ...process.env,
-    UNA_MCP_ENDPOINT: "https://unafamily.app/mcp",
+    UNA_MCP_ENDPOINT: "https://mcp.unafamily.app/",
     UNA_AGENT_TOKEN: "smoke-test-token",
     UNA_AGENT_PRIVATE_KEY_JWK: JSON.stringify({ d: "not-used-by-discovery" }),
     UNA_AGENT_KEY_ID: "una-smoke-test",
