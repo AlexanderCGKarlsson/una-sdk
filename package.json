@@ -1,0 +1,62 @@
+{
+  "name": "@unafamily/una-sdk",
+  "version": "0.1.0",
+  "description": "Privacy-first SDK and MCP tools for trusted AI assistants working with explicitly granted Una family data.",
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "examples",
+    "AGENT.md",
+    "README.md",
+    "SKILL.md"
+  ],
+  "scripts": {
+    "clean": "node scripts/clean.mjs",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "build:mcp": "npm --prefix mcp-server run build",
+    "prepack": "npm run build",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:all": "npm test && npm run build:mcp && npm --prefix mcp-server run typecheck && npm --prefix mcp-server run test:smoke",
+    "audit:release": "node scripts/audit-release.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "una",
+    "mcp",
+    "model-context-protocol",
+    "agent",
+    "ai-agents",
+    "family-planner",
+    "end-to-end-encryption",
+    "privacy"
+  ],
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexanderCGKarlsson/una-sdk.git"
+  },
+  "homepage": "https://github.com/AlexanderCGKarlsson/una-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/AlexanderCGKarlsson/una-sdk/issues"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

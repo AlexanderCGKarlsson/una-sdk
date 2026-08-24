@@ -1,0 +1,16 @@
+interface:
+  display_name: "Una"
+  short_description: "Use granted Una family-planning data"
+  brand_color: "#EFE1BE"
+  default_prompt: "Use $una-sdk to inspect my granted Una access and help with my calendar or lists."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "una"
+      description: "Una's hosted encrypted MCP endpoint"
+      transport: "streamable_http"
+      url: "https://unafamily.app/mcp"
+
+policy:
+  allow_implicit_invocation: true
