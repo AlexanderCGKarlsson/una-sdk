@@ -4,11 +4,14 @@ import { join, relative } from "node:path";
 import { tmpdir } from "node:os";
 
 const root = new URL("..", import.meta.url);
-const ignored = new Set([".git", "node_modules", "dist"]);
+const ignored = new Set([".git", "node_modules"]);
 const files = await collect(root.pathname);
 const forbidden = [
   ["private PEM", /-----BEGIN (?:EC |RSA )?PRIVATE KEY-----/],
   ["JWT-like credential", /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{10,}/],
+  ["npm access token", /npm_[A-Za-z0-9]{30,}/],
+  ["GitHub token", /gh(?:p|o|u|s|r)_[A-Za-z0-9]{30,}/],
+  ["AWS access key id", /AKIA[0-9A-Z]{16}/],
   ["Convex deployment URL", /https:\/\/[a-z0-9-]+\.convex\.(?:cloud|site)/i],
 ];
 
@@ -38,12 +41,34 @@ if (packed.status !== 0) {
 }
 const report = JSON.parse(packed.stdout)[0];
 const packedFiles = report.files.map((entry) => entry.path);
+const allowedPackagePaths = [
+  "AGENT.md",
+  "LICENSE",
+  "README.md",
+  "SKILL.md",
+  "package.json",
+];
 for (const required of ["LICENSE", "README.md", "SKILL.md", "dist/index.js", "dist/index.d.ts"]) {
   if (!packedFiles.includes(required)) throw new Error(`Package is missing ${required}`);
 }
 for (const path of packedFiles) {
+  if (
+    !allowedPackagePaths.includes(path) &&
+    !path.startsWith("dist/") &&
+    !path.startsWith("examples/")
+  ) {
+    throw new Error(`Unexpected package entry: ${path}`);
+  }
   if (/\.(?:map|jwk|env)$/.test(path) || path.includes("node_modules/")) {
     throw new Error(`Unsafe package entry: ${path}`);
+  }
+  const packedText = await readFile(join(root.pathname, path), "utf8").catch(
+    () => "",
+  );
+  for (const [label, pattern] of forbidden) {
+    if (pattern.test(packedText)) {
+      throw new Error(`${label} found in packaged file ${path}`);
+    }
   }
 }
 

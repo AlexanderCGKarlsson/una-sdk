@@ -104,6 +104,38 @@ test("reports a pairing mismatch before attempting unwrap", async () => {
   );
 });
 
+test("rejects missing wrapped-key identity metadata", async () => {
+  const generated = await generateUnaConnectionKeyPair();
+  const session = new UnaCryptoSession({
+    privateKeyJwk: generated.privateKeyJwk,
+    publicKeyId: generated.publicKeyId,
+  });
+
+  await assert.rejects(
+    session.unwrapAgentReadableKey({
+      keyKind: "agentReadableContent",
+      keyVersion: 1,
+      ciphertext: encodeBase64(new Uint8Array(97)),
+      publicKeyAlgorithm: null,
+      publicKeyId: generated.publicKeyId,
+    }),
+    (error) =>
+      error instanceof UnaCryptoError &&
+      error.code === "unsupported_algorithm",
+  );
+  await assert.rejects(
+    session.unwrapAgentReadableKey({
+      keyKind: "agentReadableContent",
+      keyVersion: 1,
+      ciphertext: encodeBase64(new Uint8Array(97)),
+      publicKeyAlgorithm: generated.algorithm,
+      publicKeyId: null,
+    }),
+    (error) =>
+      error instanceof UnaCryptoError && error.code === "key_id_mismatch",
+  );
+});
+
 function concatenate(...values) {
   const result = new Uint8Array(values.reduce((total, value) => total + value.length, 0));
   let offset = 0;

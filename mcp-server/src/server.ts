@@ -9,7 +9,7 @@ import type { UnaRuntimeConfig } from "./config.js";
 export function createUnaMcpServer(config: UnaRuntimeConfig): McpServer {
   const server = new McpServer({
     name: "una-private-connection",
-    version: "0.1.0",
+    version: "0.1.1",
   });
 
   server.registerTool(
@@ -46,12 +46,11 @@ export function createUnaMcpServer(config: UnaRuntimeConfig): McpServer {
     "una_list_calendar_events",
     {
       description:
-        "List granted calendar blocks. Readable household events include locally decrypted payloads. Personal events and events involving an ungranted person return timing only with detailStatus busy_only.",
+        "List granted calendar blocks in a window of at most 45 days. Readable household events include locally decrypted payloads. Personal events and events involving an ungranted person return timing only with detailStatus busy_only.",
       inputSchema: z.object({
         start: z.number().describe("Inclusive Unix time in milliseconds."),
         end: z.number().describe("Exclusive Unix time in milliseconds."),
-        personProfileId: z.string().optional(),
-        limit: z.number().int().positive().max(500).optional(),
+        limit: z.number().int().positive().max(250).optional(),
       }),
     },
     async (args) => {

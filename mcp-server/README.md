@@ -1,7 +1,7 @@
 # Una local MCP adapter
 
 Optional private MCP adapter backed by `UnaConnectionKit`. Una's hosted
-encrypted endpoint remains `https://unafamily.app/mcp`; this adapter runs only
+encrypted endpoint remains `https://mcp.unafamily.app/`; this adapter runs only
 inside the assistant operator's trusted boundary so it can expose locally
 decrypted `una_*` tools.
 

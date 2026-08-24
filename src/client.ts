@@ -37,6 +37,14 @@ type CallOptions = McpRequestOptions & {
   authRequired?: boolean;
 };
 
+const MAX_CALENDAR_LIST_RANGE_MS = 45 * 24 * 60 * 60 * 1000;
+
+export type CalendarListEventsArgs = {
+  start: number;
+  end: number;
+  limit?: number;
+};
+
 export class UnaMcpClient {
   readonly endpoint: URL;
   private readonly token?: string;
@@ -88,19 +96,16 @@ export class UnaMcpClient {
 
   readonly calendar = {
     listEvents: (
-      args: {
-        start: number;
-        end: number;
-        personProfileId?: string;
-        limit?: number;
-      },
+      args: CalendarListEventsArgs,
       options: McpRequestOptions = {},
-    ) =>
-      this.callTool<CalendarEventSummary[]>(
+    ) => {
+      validateCalendarListEventsArgs(args);
+      return this.callTool<CalendarEventSummary[]>(
         "calendar.list_events",
         args,
         options,
-      ),
+      );
+    },
 
     getEvent: (
       args: CalendarGetEventArgs,
@@ -213,6 +218,7 @@ export class UnaMcpClient {
   async getManifest(): Promise<McpCapabilityManifest> {
     const response = await this.fetchImpl(this.endpoint, {
       method: "GET",
+      redirect: "error",
       headers: { accept: "application/json" },
     });
     return await readMcpResponse<McpCapabilityManifest>(response);
@@ -240,6 +246,7 @@ export class UnaMcpClient {
 
     const response = await this.fetchImpl(this.endpoint, {
       method: "POST",
+      redirect: "error",
       headers,
       signal: options.signal,
       body: JSON.stringify({
@@ -264,6 +271,32 @@ export class UnaMcpClient {
       );
     }
     return await this.callTool<T>(tool, args, options);
+  }
+}
+
+function validateCalendarListEventsArgs(args: CalendarListEventsArgs): void {
+  const candidate = args as CalendarListEventsArgs & {
+    personProfileId?: unknown;
+  };
+  if (candidate.personProfileId !== undefined) {
+    throw new UnaConfigurationError(
+      "calendar.list_events personProfileId is not supported by the production endpoint. Omit it or use calendar.find_free_slots for person-specific availability.",
+    );
+  }
+  if (!Number.isFinite(args.start) || !Number.isFinite(args.end)) {
+    throw new UnaConfigurationError(
+      "calendar.list_events start and end must be finite millisecond timestamps.",
+    );
+  }
+  if (args.end <= args.start) {
+    throw new UnaConfigurationError(
+      "calendar.list_events end must be later than start.",
+    );
+  }
+  if (args.end - args.start > MAX_CALENDAR_LIST_RANGE_MS) {
+    throw new UnaConfigurationError(
+      "calendar.list_events accepts at most 45 days per request. Split larger periods into consecutive windows.",
+    );
   }
 }
 

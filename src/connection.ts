@@ -1,4 +1,5 @@
 import { UnaMcpClient } from "./client.js";
+import type { CalendarListEventsArgs } from "./client.js";
 import { UnaConfigurationError } from "./errors.js";
 import { agentReadablePayloadFields } from "./helpers.js";
 import { UnaCryptoError, UnaCryptoSession } from "./crypto.js";
@@ -272,12 +273,9 @@ export class UnaConnectionKit {
   };
 
   readonly calendar = {
-    listEvents: async (args: {
-      start: number;
-      end: number;
-      personProfileId?: string;
-      limit?: number;
-    }): Promise<Array<UnaReadableResult<CalendarEventSummary, CalendarEventPayload>>> => {
+    listEvents: async (
+      args: CalendarListEventsArgs,
+    ): Promise<Array<UnaReadableResult<CalendarEventSummary, CalendarEventPayload>>> => {
       const events = await this.raw.calendar.listEvents(args);
       return await Promise.all(
         events.map((event) => this.readableRecord<CalendarEventSummary, CalendarEventPayload>(event)),
