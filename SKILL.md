@@ -6,8 +6,9 @@ description: Connect an assistant to granted Una family calendar, people, and li
 # Use Una
 
 Use `https://mcp.unafamily.app/` as Una's hosted endpoint. Una stores and returns
-encrypted household content. Keep the bearer token, private key, unwrapped
-content keys, and plaintext inside the user's trusted assistant runtime.
+encrypted household content. Keep the bearer token, private key, and unwrapped
+content keys inside the user's trusted assistant runtime. Only give the model
+the minimum plaintext needed for the user's approved request.
 
 The SDK is optional. This skill contains the direct protocol and crypto
 contract. Prefer the SDK or local MCP adapter when installation is acceptable
@@ -18,8 +19,8 @@ because they provide tested key handling and plaintext `una_*` tools.
 1. If `una_doctor` and other `una_*` tools exist, use them. They are the local
    adapter and perform crypto outside the model.
 2. Otherwise, if the runtime may install packages, clone
-   `https://github.com/AlexanderCGKarlsson/una-sdk` or, once published, use
-   `@unafamily/una-sdk`.
+   `https://github.com/AlexanderCGKarlsson/una-sdk` or install the published
+   `@unafamily/una-sdk` package.
 3. Otherwise, implement the direct HTTPS and WebCrypto contract below in the
    trusted runtime. Fetch the public manifest first; do not guess tool schemas.
 
@@ -33,14 +34,43 @@ public key as the 65-byte raw uncompressed X9.63 point and base64url-encode it.
 Store the private key as a private JWK with owner-only access. Generate a stable
 opaque key id such as `una-<random-base64url>`.
 
-Tell the user to enter only these two values in Una:
+Return exactly these two lines for the user to paste into Una's single pairing
+field:
 
-- Public key: the base64url value only, without `UNA_AGENT_PUBLIC_KEY=`.
-- Key ID: the matching opaque key id.
+```text
+Public key: <base64url public key>
+Key ID: <stable key id>
+```
+
+Do not add `UNA_AGENT_PUBLIC_KEY=` or include the private JWK. Una 1.3 extracts
+both values from the two-line reply.
 
 The user then selects capabilities, People grants, and List grants and saves
 the connection. Selecting Read for every person covers eligible shared events
 for those people; it does not expose personal events or grant writes.
+
+## Keep the provider boundary explicit
+
+Una's hosted endpoint does not decrypt household content. The trusted runtime
+decrypts only approved, agent-readable records using a separate key; it never
+receives the household key.
+
+Before setup, identify which architecture is being used and explain it plainly:
+
+- If the connector, model, logs, and storage are fully local or self-hosted and
+  no readable content is forwarded, selected plaintext can remain within the
+  infrastructure the user controls.
+- A self-hosted connector that calls ChatGPT, Claude, or another hosted model is
+  not fully local. The selected readable details sent in the request enter that
+  provider's environment.
+- If a provider-hosted assistant stores the connection secret and decrypts the
+  records, the selected plaintext is processed in that provider's environment.
+
+Never claim that end-to-end encryption continues to hide plaintext from a
+service after the runtime sends readable content to it. Una does not train AI
+models on household content, but an external provider's privacy, storage,
+retention, and model-training policies apply to the plaintext it receives.
+Revocation stops future Una calls; it cannot recall content already received.
 
 ## Call the hosted endpoint directly
 

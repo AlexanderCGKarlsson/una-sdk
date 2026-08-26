@@ -14,6 +14,6 @@ await writeFile(outputPath, `${JSON.stringify(pairing.privateKeyJwk)}\n`, {
 });
 
 console.log(`Private key saved with owner-only permissions: ${outputPath}`);
-console.log(`Public key value: ${pairing.publicKey}`);
+console.log(`Public key: ${pairing.publicKey}`);
 console.log(`Key ID: ${pairing.publicKeyId}`);
-console.log("Paste only the public key value and key ID into Una.");
+console.log("Paste the Public key and Key ID lines together into Una.");

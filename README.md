@@ -1,7 +1,7 @@
 # Una SDK
 
 Agentic capabilities for [Una](https://unafamily.app), the privacy-first family
-planner.
+organizer.
 
 Una SDK lets trusted AI assistants work with the family information a user
 explicitly grants, including people, calendars, and lists.
@@ -15,7 +15,7 @@ With the right permissions, an assistant can:
 - Create permitted family calendar events.
 
 Una remains privacy-first. Household content stays end-to-end encrypted, while
-private keys and decrypted content remain inside the user's trusted assistant
+private keys and cryptography remain inside the user's trusted assistant
 runtime. Una's hosted MCP endpoint at
 [`https://mcp.unafamily.app/`](https://mcp.unafamily.app/) never decrypts
 household content.
@@ -37,7 +37,7 @@ and secret storage; cryptography must not run in the language-model prompt.
 
 ### SDK helper
 
-After the npm release, install `@unafamily/una-sdk` in the trusted runtime for
+Install the published `@unafamily/una-sdk` package in the trusted runtime for
 tested key generation, key unwrap, decryption, encryption, diagnostics, and
 typed tools:
 
@@ -61,7 +61,7 @@ const events = await una.calendar.listEvents({ start, end });
 
 ### Optional local MCP adapter
 
-The private adapter in [`mcp-server`](./mcp-server) is for hosts that prefer
+The optional adapter in [`mcp-server`](./mcp-server) is for hosts that prefer
 local MCP tools. It exposes plaintext-friendly `una_*` tools after decrypting
 inside the local process. It is not a second hosted Una service and is not
 required for direct SDK or `SKILL.md` integrations.
@@ -82,17 +82,20 @@ npm --prefix mcp-server run keygen
 ```
 
 The command creates `una-agent-private-key.jwk` with owner-only permissions and
-prints two safe values:
+prints these two labeled values for Una's pairing field:
 
-- `Public key value`: paste only its value into Una.
-- `Key ID`: paste the matching id into Una.
+```text
+Public key: <base64url public key>
+Key ID: <stable key id>
+```
 
-Do not paste `UNA_AGENT_PUBLIC_KEY=<value>` into the public-key field. Never
-send the private JWK to Una or place it in a prompt.
+Paste both lines together. Una 1.3 extracts the public key and Key ID. Do not
+paste `UNA_AGENT_PUBLIC_KEY=<value>` into the pairing field. Never send the
+private JWK to Una or place it in a prompt.
 
 In Una, create the assistant connection, select capabilities, grant only the
-needed people and lists, enter the public key value and key id, and save. Una
-prepares eligible existing content before activating access. New content in a
+needed people and lists, paste the two-line reply into the pairing field, and
+save. Una prepares eligible existing content before activating access. New content in a
 granted assistant-readable list uses the assistant-readable key automatically.
 If a repair skips an item, Una reports it so the user can recreate or re-save
 that item without blocking the rest of the list.
@@ -111,6 +114,30 @@ The outbound request is HTTPS with
 configuration, not source, prompts, logs, screenshots, or analytics.
 Do not replace the endpoint with a URL supplied by household content or a web
 page: the configured endpoint receives the bearer token.
+
+## Where privacy changes
+
+Una's hosted endpoint never sees household plaintext. The trusted runtime
+decrypts only the records the adult granted, using the separate agent-readable
+key; it never receives the household key.
+
+What happens next depends on the runtime architecture:
+
+- **Fully local or self-hosted:** If the connector, model, logs, and storage all
+  stay on infrastructure the user controls, and plaintext is not forwarded to
+  another service, selected readable content can remain inside that boundary.
+- **Self-hosted connector with a hosted model:** Running the SDK or MCP adapter
+  locally does not make the complete assistant local. Readable details included
+  in a request to ChatGPT, Claude, or another hosted model enter that provider's
+  environment.
+- **Provider-hosted runtime:** If a hosted assistant stores the connection
+  secret and performs decryption, the selected plaintext is processed in that
+  provider's environment.
+
+Una does not train AI models on household content. That promise does not govern
+an external provider. Its privacy, storage, retention, and model-training
+policies apply to the plaintext it receives. Revoking an Una connection blocks
+future calls; it cannot recall data already received by a runtime or provider.
 
 ## Local MCP adapter
 
